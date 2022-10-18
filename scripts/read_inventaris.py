@@ -19,7 +19,9 @@ prog_f9 = re.compile('(?:NL-AsdNIOD|NIOD)?(?:_|-)([0-9a-zA-Z]+?)(?:PRIVACY)?(?:_
 
 prog_p1 = re.compile('/([0-9]+)/(?:JPG|TIFF)/([0-9]+[a-z]?)/([a-zA-Z0-9-_]+)\\.(.+)')
 
-prog_p2 = re.compile('/([0-9]+)-([0-9]+)/([a-zA-Z0-9-_ ]+)\\.(.+)')
+prog_p2 = re.compile('/([0-9]+)[-_]([0-9]+)/([a-zA-Z0-9-_ ]+)\\.(.+)')
+
+prog_p3 = re.compile('/([0-9]+)-([A-Z][0-9]+)-([0-9]+)/(?:[a-zA-Z0-9-_ ]+)\\.(.+)')
 
 #saved_ext = []
 
@@ -53,9 +55,28 @@ def do_search(tekst):
     res = prog_p2.search(tekst)
     if res:
         return ['b',res.group(1), res.group(2), res.group(3), res.group(4)]
+    res = prog_p3.search(tekst)
+    if res:
+        return ['a',res.group(1), res.group(2), res.group(3), res.group(4)]
+
     return ['','','','','']
 
 
+def make_target(res):
+    preservation =['jpg','tif'] 
+    [soort, collectie, inventaris, sequentie, extensie] = res
+    #extensie = extensie.lower()
+    result = ''
+    result = f"NL-AsdNIOD_{collectie}_{inventaris}/"
+    if soort=='a':
+        if extensie.lower() in preservation:
+            p_t = 'preservation'
+        else:
+            p_t = 'transcription'
+        result += f"{p_t}/NL-AsdNIOD_{collectie}_{inventaris}_{sequentie}.{extensie}"
+    else: # soort = 'b'
+        result += f"{sequentie}.{extensie}"
+    return result
 
 
 def end_prog(code=0):
@@ -113,30 +134,18 @@ if __name__ == "__main__":
         for line in f:
             res = do_search(line.strip())
             if '' not in res:
-                [soort,collectie, inventaris, sequentie, extensie] = res
-                if extensie=='db':
-                    count_db += 1
-                if extensie in ['jpg','tif']:
-                    p_t = 'preservation'
-                else:
-                    p_t = 'transcription'
-                uitvoer_s.write(f"{line.strip()}\t")
-                if soort=='a':
-                    uitvoer_s.write(f"NL-AsdNIOD_{collectie}_{inventaris}/{p_t}/NL-AsdNIOD_")
-                    uitvoer_s.write(f"{collectie}_{inventaris}_{sequentie}.{extensie}\n")
-                else: # soort = 'b
-                    uitvoer_s.write(f"NL-AsdNIOD_{collectie}_{inventaris}/")
-                    uitvoer_s.write(f"{sequentie}.{extensie}\n")
+                uitvoer_s.write(f"{line.strip()}\t{make_target(res)}\n")
                 count_matched += 1
             else:
-                if line.strip().endswith('.db'):
-                    count_db += 1
                 uitvoer_f.write(f"{line.strip()}\n")
                 count_not_matched += 1
                 if (count_not_matched % 500)==0:
                     stderr(line.strip())
-            if line.strip().endswith('Thumbs.db'):
-                count_thumbs_db += 1
+            #
+            #if line.strip().endswith('.db'):
+            #    count_db += 1
+            #if line.strip().endswith('Thumbs.db'):
+            #    count_thumbs_db += 1
             teller += 1
 
     stderr(f'counted {teller:>7} files')
@@ -148,8 +157,8 @@ if __name__ == "__main__":
     print(f'counted {count_matched:>7} matched')
     print(f'counted {count_not_matched:>7} not matched')
     print(f'matched: {(100 * count_matched / teller):>6.2f}%')
-    print(f'db: {count_db:>7}')
-    print(f'db: {count_thumbs_db:>7} thumbs')
+#    print(f'db: {count_db:>7}')
+#    print(f'db: {count_thumbs_db:>7} thumbs')
 
     #stderr(f'\ngevonden extensies: {saved_ext}')
 
