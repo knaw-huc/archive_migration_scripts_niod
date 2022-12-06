@@ -27,7 +27,6 @@ prog_p2 = re.compile('/([0-9]+)[-_]([0-9]+)/([a-zA-Z0-9-_ ]+)\\.(.+)')
 
 prog_p3 = re.compile('/([0-9]+)-([A-Z][0-9]+)-([0-9]+)/(?:[a-zA-Z0-9-_ ]+)\\.(.+)')
 
-#saved_ext = []
 
 def do_search(tekst):
     collectie = ''
@@ -56,7 +55,6 @@ def do_search(tekst):
     res = prog_p3.search(tekst)
     if res:
         return ['a',res.group(1), res.group(2), res.group(3), res.group(4)]
-
     return ['','','','','']
 
 
@@ -78,20 +76,17 @@ def make_target(res):
     return directory,result
 
 
-def move_file(dir_in,file_in, dir_out, target, mv_file='mv_file.sh', do_move=False):
-    source = os.path.join(dir_in,file_in) #.replace(' ','\ ')
+def move_file(dir_in,file_in, dir_out, target, do_move=False, do_copy=False):
+    source = os.path.join(dir_in,file_in)
     target = os.path.join(dir_out,target)
-    if not os.path.exists(dirname(target)):
-        stderr(f'{target} does mot exist')
+    if (do_move or do_copy) and not os.path.exists(dirname(target)):
         Path(dirname(target)).mkdir(parents=True)
-
     if do_move:
-        shutil.copy2(source,target)
         shutil.move(source,target)
+    elif do_copy:
+        shutil.copy2(source,target)
     else:
-        pass
-    # write to file
-#    end_prog(1)
+        print(f'mv {source} {target}')
 
 
 def end_prog(code=0):
@@ -112,22 +107,18 @@ def arguments():
     ap.add_argument('-v', '--inventaris',
                     help="inventaris",
                     default= "inventaris1.txt")
-#    ap.add_argument('-c', '--catalogue',
-#                    help="catalogue",
-#                    default= "catalogus_collectienummers_inventarisnummers.csv")
+    ap.add_argument('-c', '--copy',
+                    help="copy - default = False (overwrites move)",
+                    action='store_true')
     ap.add_argument('-i', '--inputdir',
                     help="inputdir",
                     default="old_niod_depot")
     ap.add_argument('-o', '--outputdir',
                     help="outputdir",
                     default="new_niod_depot")
-    ap.add_argument('-m', '--move_file',
-                    help="file to save move commands",
-                    default="mv_file.sh")
-    ap.add_argument('-d', '--do_move',
+    ap.add_argument('-m', '--move',
                     help='move immediately (default = False)',
-                    action='store_true') #,
-#                    default=False)
+                    action='store_true')
     ap.add_argument('-r', '--resultsfile',
                     help="resultsfile",
                     default="results.txt")
@@ -145,12 +136,12 @@ if __name__ == "__main__":
 
     args = arguments()
     inventaris = args['inventaris']
-#    catalogue = args['catalogue']
     dir_in = args['inputdir']
     dir_out = args['outputdir']
-    mv_file = args['move_file']
-    do_move = args['do_move']
-    stderr(f'do_move: {do_move}')
+    do_move = args['move']
+    do_copy = args['copy']
+    if do_copy:
+        do_move = False
     results = args['resultsfile']
     uitvoer_s = open(results, 'w', encoding='utf-8')
     failed = args['failed']
@@ -167,20 +158,12 @@ if __name__ == "__main__":
             res = do_search(line.strip())
             if '' not in res:
                 directory,target = make_target(res)
-#               all_dirs.append(directory)
-                move_file(dir_in, line.strip(), dir_out, target, mv_file, do_move)
+                move_file(dir_in, line.strip(), dir_out, target, do_move, do_copy)
                 uitvoer_s.write(f"{line.strip(target)}\t{target}\n")
                 count_matched += 1
             else:
                 uitvoer_f.write(f"{line.strip()}\n")
                 count_not_matched += 1
-#                if (count_not_matched % 500)==0:
-#                    stderr(line.strip())
-            #
-            #if line.strip().endswith('.db'):
-            #    count_db += 1
-            #if line.strip().endswith('Thumbs.db'):
-            #    count_thumbs_db += 1
             teller += 1
 
     stderr(f'counted {teller:>7} files')
@@ -192,16 +175,5 @@ if __name__ == "__main__":
     print(f'counted {count_matched:>7} matched')
     print(f'counted {count_not_matched:>7} not matched')
     print(f'matched: {(100 * count_matched / teller):>6.2f}%')
-
-#   all_dirs = list(set(all_dirs))
-#   uitvoer_d = open('all_dirs.txt','w', encoding='utf-8')
-#   for d in sorted(all_dirs):
-#       uitvoer_d.write(f'{d}\n')
-#   print(f'all_dirs: {len(all_dirs)}')
-    
-#    print(f'db: {count_db:>7}')
-#    print(f'db: {count_thumbs_db:>7} thumbs')
-
-    #stderr(f'\ngevonden extensies: {saved_ext}')
 
     end_prog(0)
