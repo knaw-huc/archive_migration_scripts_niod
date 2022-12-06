@@ -25,3 +25,5 @@ Parameters:
 `-r` resultsfile
 
 `-f` list of failed filename conversions
+
+If both `-m` and `-c` are `False` you perform a `dry run', i.e. a series of `mv source target` are printed on the prompt.
