@@ -1,10 +1,12 @@
-# archive_migration_scripts_niod
+# Scripts to move files from the NIOD Archive
 
 `read_inventaris.py` read the list of files and write them to `result.txt` if matched of `failed.txt` if not.
 
 `filter_jpg.py` Take a list of all `jpg` and `tif` files in `result.txt` and make a list of all that occur in both.
 
 `test.py` tests several filenames to see if they can be matched.
+
+## The Move Script
 
 `move_files.py` moves or copies the files from the old to the new depot. It also makes a list like `read_inventaris.py` does.
 
