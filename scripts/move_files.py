@@ -1,17 +1,13 @@
 # -*- coding: utf-8 -*-
 import argparse
 import datetime
-from datetime import date
 from datetime import datetime
-import glob
-import json
 import os
 from os.path import dirname
-from pathlib import Path,PurePath
+from pathlib import Path
 import re
 import shutil
 import sys
-from typing import List
 
 prog_f1 = re.compile('([0-9]+)(?:_|-)([0-9]+)(?:_|-)([0-9]+)\\.(.+)$')
 
